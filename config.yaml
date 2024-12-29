@@ -1,0 +1,5 @@
+Main:
+  debug: false
+  solver: "razorcap"
+  api_key: "ur key"
+
