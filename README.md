@@ -28,4 +28,8 @@ This Joiner isnt great and coded very shitty xd, so dont blame me if u have any 
 
 ---
 
+## Preview 
+
+![Preview](zumglück.png)
+
 ### Enjoy! 🎉
