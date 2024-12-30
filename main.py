@@ -43,22 +43,7 @@ class Joiner:
         self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (like Gecko) Chrome/111.0.5563.110 Safari/537.36"
         self.session = tls_client.Session(
             client_identifier="chrome_111_0_win",
-            random_tls_extension_order=True,
-            ja3_string="771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-51-57-47-53-10,0-23-65281-10-11-35-16-5-34-51-43-13-45-28-21,29-23-24-25-256-257,0",
-            h2_settings={"HEADER_TABLE_SIZE": 65536, "MAX_CONCURRENT_STREAMS": 1000, "INITIAL_WINDOW_SIZE": 6291456, "MAX_HEADER_LIST_SIZE": 262144},
-            h2_settings_order=["HEADER_TABLE_SIZE", "MAX_CONCURRENT_STREAMS", "INITIAL_WINDOW_SIZE", "MAX_HEADER_LIST_SIZE"],
-            supported_signature_algorithms=["ECDSAWithP256AndSHA256", "PSSWithSHA256", "PKCS1WithSHA256", "ECDSAWithP384AndSHA384", "PSSWithSHA384", "PKCS1WithSHA384", "PSSWithSHA512", "PKCS1WithSHA512"],
-            supported_versions=["GREASE", "1.3", "1.2"],
-            key_share_curves=["GREASE", "X25519"],
-            cert_compression_algo="brotli",
-            pseudo_header_order=[":method", ":authority", ":scheme", ":path"],
-            connection_flow=15663105,
-            priority_frames=[
-                {"stream_id": 15, "priority": {"weight": 1}},
-                {"stream_id": 13, "priority": {"weight": 1}},
-                {"stream_id": 11, "priority": {"weight": 1}}
-            ]
-        )
+            random_tls_extension_order=True,)
         self.base_headers = {
             "accept": "*/*",
             "accept-encoding": "gzip, deflate, br",
