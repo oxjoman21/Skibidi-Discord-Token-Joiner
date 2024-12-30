@@ -77,66 +77,67 @@ class Utils:
             "device": "",
             "system_locale": "en-US",
             "browser_user_agent": user_agent,
-            "browser_version": self.browser(user_agent),
+            "browser_version": self.parse_user_agent(user_agent),
             "os_version": "10",
             "referrer": "",
             "referring_domain": "",
             "referrer_current": "https://discord.com/",
             "referring_domain_current": "discord.com",
             "release_channel": "stable",
-            "client_build_number": self.build(),
-            "native_build_number": self.native(),
+            "client_build_number": self.assemble_build(),
+            "native_build_number": self.compute_version(),
             "client_event_source": None
         }
         return base64.b64encode(json.dumps(properties).encode()).decode()
 
-    def get_cookies(self, session) -> Dict[str, str]:
-        cookies = {}
+    def gather_cookies(self, session) -> Dict[str, str]:
         try:
-            response = session.get("https://discord.com")
-            for cookie_name, cookie_value in response.cookies.items():
-                if cookie_name.startswith("__") and cookie_name.endswith("uid"):
-                    cookies[cookie_name] = cookie_value
-            return cookies
-        except Exception as e:
-            log.error(f"Error while fetching cookies -> {e}")
-        return cookies
+            request = session.get("https://discord.com")
+            box = {}
+            for n, v in request.cookies.items():
+                if n.startswith("__") and n.endswith("uid"):
+                    box[n] = v
+            return box
+        except Exception as x:
+            log.error(f"Error while fetching -> {x}")
+        return {}
 
-    def native(self):
-        response = requests.get("https://updates.discord.com/distributions/app/manifests/latest", params={"install_id": "0", "channel": "stable", "platform": "win", "arch": "x86"}, headers={"user-agent": "Discord-Updater/1", "accept-encoding": "gzip"}, timeout=10).json()
-        return int(response["metadata_version"])
+    def compute_version(self):
+        res = requests.get(
+            "https://updates.discord.com/distributions/app/manifests/latest",
+            params={"install_id":"0","channel":"stable","platform":"win","arch":"x86"},
+            headers={"user-agent":"Discord-Updater/1","accept-encoding":"gzip"},
+            timeout=10
+        ).json()
+        return int(res["metadata_version"])
 
-    def build(self):
-        page = requests.get("https://discord.com/app", timeout=10).text
-        assets = re.findall(r'src="/assets/([^"]+)"', page)
-        for asset in reversed(assets):
-            js = requests.get(f"https://discord.com/assets/{asset}", timeout=10).text
-            if "buildNumber:" in js:
-                return int(js.split('buildNumber:"')[1].split('"')[0])
+    def assemble_build(self):
+        pg = requests.get("https://discord.com/app", timeout=10).text
+        found = re.findall(r'src="/assets/([^"]+)"', pg)
+        for f in reversed(found):
+            jsn = requests.get(f"https://discord.com/assets/{f}", timeout=10).text
+            if "buildNumber:" in jsn:
+                return int(jsn.split('buildNumber:"')[1].split('"')[0])
         return -1
 
-    def build_version(self) -> Tuple[int, str, int]:
-        return (self._build(), self._main_version(), self._native())
-
-    def browser(self, user_agent):
-        patterns = {"Chrome": r"Chrome/([\d.]+)", "Firefox": r"Firefox/([\d.]+)", "Safari": r"Version/([\d.]+).*Safari", "Opera": r"Opera/([\d.]+)", "Edge": r"Edg/([\d.]+)", "IE": r"MSIE ([\d.]+);"}
-        for pattern in patterns.values():
-            match = re.search(pattern, user_agent)
-            if match:
-                return match.group(1)
+    def parse_user_agent(self, ua):
+        tmp = {"Chrome":r"Chrome/([\d.]+)","Firefox":r"Firefox/([\d.]+)","Safari":r"Version/([\d.]+).*Safari","Opera":r"Opera/([\d.]+)","Edge":r"Edg/([\d.]+)","IE":r"MSIE ([\d.]+);"}
+        for p in tmp.values():
+            m = re.search(p, ua)
+            if m:
+                return m.group(1)
         return "Unknown"
 
-    def get_xcontext_values(self, invite, token, session) -> Optional[Tuple[str, str, str, str]]:
-        headers = {"Authorization": token}
-        r = session.get(f"https://discord.com/api/v9/invites/{invite}", headers=headers)
+    def determine_context(self, code, token, sess) -> Optional[Tuple[str, str, str, str]]:
+        r = sess.get(f"https://discord.com/api/v9/invites/{code}", headers={"Authorization":token})
         if r.status_code == 200:
-            data = r.json()
-            guild_id = data.get("guild", {}).get("id")
-            channel_id = data.get("channel", {}).get("id")
-            ctype = data.get("type", "unknown")
-            if not guild_id or not channel_id:
+            j = r.json()
+            gid = j.get("guild",{}).get("id")
+            cid = j.get("channel",{}).get("id")
+            t = j.get("type","unknown")
+            if not gid or not cid:
                 return None
-            return ("Join Guild", guild_id, channel_id, str(ctype))
+            return ("Join Guild", gid, cid, str(t))
         return None
 
     def solve(self, sitekey, rqdata=None, rqtoken=None, session=None, proxy=None):
