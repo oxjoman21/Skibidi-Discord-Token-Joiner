@@ -16,7 +16,7 @@ warnings.simplefilter("ignore", InsecureRequestWarning)
 log = Log()
 
 class Utils:
-    def _fetch_session(self, token):
+    def fetch_session(self, token, user_agent):
         ws = websocket.WebSocket()
         try:
             ws.connect("wss://gateway.discord.gg/?v=9&encoding=json")
@@ -27,15 +27,16 @@ class Utils:
                     "token": token,
                     "capabilities": 8189,
                     "properties": {
-                        "os": "iOS",
-                        "browser": "Discord iOS",
-                        "device": "iPhone15,3",
+                        "os": "Windows",
+                        "browser": "Chrome",
+                        "device": "",
                         "system_locale": "en-US",
-                        "browser_version": "196.0",
-                        "os_version": "16.6.1",
-                        "client_build_number": 196000,
-                        "client_version": "196.0",
-                        "device_vendor_id": self._generate_device_id()
+                        "browser_version": "111.0.5563.110",
+                        "os_version": "10",
+                        "client_build_number": 111000,
+                        "client_version": "111.0.5563.110",
+                        "device_vendor_id": "unknown",
+                        "browser_user_agent": user_agent,
                     },
                     "presence": {
                         "status": "online",
@@ -69,43 +70,27 @@ class Utils:
         except json.JSONDecodeError as e:
             return f"JSON error: {e}"
 
-    def _x_super_properties(self, user_agent):
-        device_id = self._generate_device_id()
+    def x_super_properties(self, user_agent):
         properties = {
-            "os": "iOS",
-            "browser": "Discord iOS",
-            "device": "iPhone13,4",
+            "os": "Windows",
+            "browser": "Chrome",
+            "device": "",
             "system_locale": "en-US",
             "browser_user_agent": user_agent,
-            "browser_version": "196.0",
-            "os_version": "16.6.1",
-            "client_build_number": 196000,
+            "browser_version": self.browser(user_agent),
+            "os_version": "10",
+            "referrer": "",
+            "referring_domain": "",
+            "referrer_current": "https://discord.com/",
+            "referring_domain_current": "discord.com",
             "release_channel": "stable",
-            "device_vendor_id": device_id,
-            "device_id": device_id,
-            "browser_push": True,
-            "is_popup": False,
-            "client_version": "196.0"
+            "client_build_number": self.build(),
+            "native_build_number": self.native(),
+            "client_event_source": None
         }
         return base64.b64encode(json.dumps(properties).encode()).decode()
 
-    def _generate_track(self):
-        return base64.b64encode(json.dumps({
-            "os": "iOS",
-            "browser": "Discord iOS",
-            "device": "iPhone15,3",
-            "system_locale": "en-US",
-            "release_channel": "stable",
-            "client_build_number": 196000
-        }).encode()).decode()
-
-    def _generate_fingerprint(self):
-        return ''.join(random.choices('0123456789', k=19))
-
-    def _generate_device_id(self):
-        return ''.join(random.choices('0123456789ABCDEF', k=32))
-
-    def _get_cookies(self, session) -> Dict[str, str]:
+    def get_cookies(self, session) -> Dict[str, str]:
         cookies = {}
         try:
             response = session.get("https://discord.com")
@@ -117,16 +102,11 @@ class Utils:
             log.error(f"Error while fetching cookies -> {e}")
         return cookies
 
-    def _native(self):
+    def native(self):
         response = requests.get("https://updates.discord.com/distributions/app/manifests/latest", params={"install_id": "0", "channel": "stable", "platform": "win", "arch": "x86"}, headers={"user-agent": "Discord-Updater/1", "accept-encoding": "gzip"}, timeout=10).json()
         return int(response["metadata_version"])
 
-    def _main_version(self):
-        response = requests.get("https://discord.com/api/downloads/distributions/app/installers/latest", params={"channel": "stable", "platform": "win", "arch": "x86"}, allow_redirects=False, timeout=10).text
-        match = re.search(r"x86/(.*?)/", response)
-        return match.group(1) if match else "Unknown"
-
-    def _build(self):
+    def build(self):
         page = requests.get("https://discord.com/app", timeout=10).text
         assets = re.findall(r'src="/assets/([^"]+)"', page)
         for asset in reversed(assets):
@@ -135,10 +115,10 @@ class Utils:
                 return int(js.split('buildNumber:"')[1].split('"')[0])
         return -1
 
-    def _build_version(self) -> Tuple[int, str, int]:
+    def build_version(self) -> Tuple[int, str, int]:
         return (self._build(), self._main_version(), self._native())
 
-    def _browser(self, user_agent):
+    def browser(self, user_agent):
         patterns = {"Chrome": r"Chrome/([\d.]+)", "Firefox": r"Firefox/([\d.]+)", "Safari": r"Version/([\d.]+).*Safari", "Opera": r"Opera/([\d.]+)", "Edge": r"Edg/([\d.]+)", "IE": r"MSIE ([\d.]+);"}
         for pattern in patterns.values():
             match = re.search(pattern, user_agent)
@@ -181,7 +161,7 @@ class Utils:
                 "siteurl": "discord.com",
                 "proxy": parsed,
                 "rqdata": rqdata,
-                "useragent": "Discord/196.0 (iPhone; CPU iPhone OS 16.6.1 like Mac OS X)"
+                "useragent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (like Gecko) Chrome/111.0.5563.110 Safari/537.36"
             }
         }
         r = session.post(url, headers=headers, json=payload)
