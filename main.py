@@ -40,9 +40,9 @@ def parse_proxy(proxy_str):
 class Joiner:
     def __init__(self, invite):
         self.inv = invite
-        self.user_agent = "Discord/196.0 (iPhone; CPU iPhone OS 16.6.1 like Mac OS X)"
+        self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (like Gecko) Chrome/111.0.5563.110 Safari/537.36"
         self.session = tls_client.Session(
-            client_identifier="safari_ios_16_0",
+            client_identifier="chrome_111_0_win",
             random_tls_extension_order=True,
             ja3_string="771,4865-4867-4866-49195-49199-52393-52392-49196-49200-49162-49161-49171-49172-51-57-47-53-10,0-23-65281-10-11-35-16-5-34-51-43-13-45-28-21,29-23-24-25-256-257,0",
             h2_settings={"HEADER_TABLE_SIZE": 65536, "MAX_CONCURRENT_STREAMS": 1000, "INITIAL_WINDOW_SIZE": 6291456, "MAX_HEADER_LIST_SIZE": 262144},
@@ -69,14 +69,14 @@ class Joiner:
             "user-agent": self.user_agent,
             "x-discord-locale": "en-US",
             "x-discord-timezone": "America/New_York",
-            "x-super-properties": utils._x_super_properties(self.user_agent),
+            "x-super-properties": utils.x_super_properties(self.user_agent),
             "connection": "keep-alive",
             "host": "discord.com",
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin"
         }
-        self.base_cookies = utils._get_cookies(self.session)
+        self.base_cookies = utils.get_cookies(self.session)
 
     def update_session(self, token, proxy=None):
         try:
@@ -107,7 +107,7 @@ class Joiner:
                 }
                 headers["x-context-properties"] = b64encode(json.dumps(xctx_dict).encode()).decode()
                 if Debug:
-                    log.success("Updated x-context-properties -> " + headers["x-context-properties"])
+                    log.success("Updated x-context-properties -> " + headers["x-context-properties"][:30])
             else:
                 headers["x-context-properties"] = b64encode(json.dumps({}).encode()).decode()
             self.session.headers = headers
@@ -132,7 +132,7 @@ class Joiner:
         if not self.update_session(token, proxy):
             return False
         url = f"https://discord.com/api/v9/invites/{self.inv}"
-        session_id = utils._fetch_session(token)
+        session_id = utils.fetch_session(token,self.user_agent)
         if session_id in ["Invalid token", "429"]:
             log.error(f"{Fore.RED}Cant Fetch Session -> {color_switch(token[:30] + '*****','red','blue')}")
             return False
