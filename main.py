@@ -42,8 +42,8 @@ class Joiner:
         self.inv = invite
         self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (like Gecko) Chrome/111.0.5563.110 Safari/537.36"
         self.session = tls_client.Session(
-            client_identifier="chrome_111_0_win",
-            random_tls_extension_order=True,)
+            client_identifier="chrome_112",
+            random_tls_extension_order=True)
         self.base_headers = {
             "accept": "*/*",
             "accept-encoding": "gzip, deflate, br",
